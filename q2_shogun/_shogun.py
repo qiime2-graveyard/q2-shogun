@@ -6,12 +6,18 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
+import os
 import subprocess
 import tempfile
-from shutil import copyfile
+import shutil
 
+import yaml
 import biom
-import qiime2
+import pandas as pd
+from qiime2.util import duplicate
+from q2_types.feature_data import DNAFASTAFormat
+
+from q2_shogun._formats import Bowtie2IndexDirFmt
 
 
 def _run_command(cmd, verbose=True):
@@ -26,24 +32,42 @@ def _run_command(cmd, verbose=True):
     subprocess.run(cmd, check=True)
 
 
-def minipipe(input: DNAFASTAFormat, refseqs: DNAFASTAFormat,
-             reference_taxonomy: pd.Series, database : bowtieindex,
+def setup_database_dir(tmpdir, database, refseqs, reftaxa):
+    BOWTIE_PATH = 'bowtie2'
+    duplicate(str(refseqs), os.path.join(tmpdir, refseqs.path.name))
+    duplicate(str(reftaxa), os.path.join(tmpdir, reftaxa.path.name))
+    shutil.copytree(str(database), os.path.join(tmpdir, BOWTIE_PATH),
+                    copy_function=duplicate)
+    params = {
+        'general': {
+            'taxonomy': reftaxa.path.name,
+            'fasta': refseqs.path.name
+        },
+        'bowtie2': os.path.join(BOWTIE_PATH, database.get_name())
+    }
+    with open(os.path.join(tmpdir, 'metadata.yaml'), 'w') as fh:
+        yaml.dump(params, fh, default_flow_style=False)
+
+
+def load_table(tab_fp):
+    '''Convert classic OTU table to biom feature table'''
+    return biom.table.Table.from_tsv(tab_fp, None, None, None)
+
+
+def minipipe(query: DNAFASTAFormat, reference_reads: DNAFASTAFormat,
+             reference_taxonomy: pd.Series, database: Bowtie2IndexDirFmt,
              taxacut: float=0.8,
-             threads: int=1, percent_id: float=0.98) -> pd.DataFrame:
-    with tempfile.NamedTemporaryFile() as tmp:
-        # generate the expected database dir structure
-        copyfile(str(refseqs), os.path.join(tmp, 'seqs.fasta'))
-        copyfile(str(reference_taxonomy), os.path.join(tmp, 'taxa.tsv'))
-        metadata_fp = os.path.join(tmp, 'metadata.yaml')
-        with open(metadata_fp, 'w') as metadata_f:
-            metadata_f.write('general:\n'
-                             '  taxonomy: taxa.tsv\n'
-                             '  fasta: seqs.fasta\n'
-                             'bowtie2: {0}'.format(bowtieindex))
+             threads: int=1, percent_id: float=0.98) -> (
+                     biom.Table, biom.Table, biom.Table, biom.Table):
+    with tempfile.TemporaryDirectory('q2-shogun') as tmpdir:
+        database_dir = tmpdir.name
+        setup_database_dir(database_dir,
+                           database, reference_reads, reference_taxonomy)
 
         # run pipeline
-        cmd = ['shogun', 'pipeline', '-i', input, '-d', tmp, '-o', tmp,
-               '-a', 'bowtie2', '-x', taxacut, '-t', threads, '-p', percent_id]
+        cmd = ['shogun', 'pipeline', '-i', str(query), '-d', database_dir,
+               '-o', database_dir, '-a', 'bowtie2', '-x', taxacut,
+               '-t', threads, '-p', percent_id]
         _run_command(cmd)
 
         # output selected results as feature tables
@@ -51,47 +75,4 @@ def minipipe(input: DNAFASTAFormat, refseqs: DNAFASTAFormat,
                   'taxatable.strain.kegg.txt',
                   'taxatable.strain.kegg.modules.txt',
                   'taxatable.strain.kegg.pathways.txt']
-        return (import_table(os.path.join(tmp, t)) for t in tables)
-
-
-def import_table(tab_fp):
-    '''Convert classic OTU table to biom feature table'''
-    table = biom.table.Table.from_tsv(tab_fp, None, None, None)
-    return qiime2.Artifact.import_data('FeatureTable[Frequency]', table)
-
-
-plugin.methods.register_function(
-    function=minipipe,
-    inputs={'input': FeatureData[Sequence],
-            'refseqs': FeatureData[Sequence],
-            'reference_taxonomy': FeatureData[Taxonomy],
-            'database': BowtieIndex[Genome]},
-    parameters={'taxacut': Float % Range(0.0, 1.0, inclusive_end=True),
-                'threads': Int % Range(1, None),
-                'percent_id': Float % Range(0.0, 1.0, inclusive_end=True)},
-    outputs=[('taxa_table', FeatureTable[Frequency]),
-             ('kegg_table', FeatureTable[Frequency]),
-             ('module_table', FeatureTable[Frequency]),
-             ('pathway_table', FeatureTable[Frequency])],
-    input_descriptions={'query': 'Sequences to classify taxonomically.',
-                        'reference_reads': 'reference sequences.',
-                        'reference_taxonomy': 'reference taxonomy labels.',
-                        'database': 'bowtie2 index artifact.'},
-    parameter_descriptions={
-        'taxacut': 'Minimum fraction of assignments must match top '
-                   'hit to be accepted as consensus assignment. Must '
-                   'be in range (0.0, 1.0].',
-        'threads': 'Number of threads to use.',
-        'percent_id': 'Reject match if percent identity to query is '
-                      'lower. Must be in range [0.0, 1.0].')
-    },
-    output_descriptions={
-        'taxa_table': 'Frequency table of taxonomic composition.',
-        'kegg_table': 'Frequency table of KEGG ortholog composition.',
-        'module_table': 'Frequency table of KEGG module composition.',
-        'pathway_table': 'Frequency table of KEGG pathway composition.'},
-    name='SHOGUN bowtie2 taxonomy and functional profiler',
-    description=('Profile query sequences functionally and taxonomically '
-                 'using via alignment with bowtie2, followed by LCA taxonomy '
-                 'assignment.')
-)
+        return tuple(load_table(os.path.join(database_dir, t)) for t in tables)
