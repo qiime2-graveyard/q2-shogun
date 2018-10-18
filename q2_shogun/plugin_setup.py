@@ -9,6 +9,8 @@
 from qiime2.plugin import Plugin, Citations
 
 import q2_shogun
+from q2_shogun._formats import Bowtie2IndexDirFmt
+from q2_shogun._types import Bowtie2Index
 
 citations = Citations.load('citations.bib', package='q2_shogun')
 plugin = Plugin(
@@ -20,3 +22,7 @@ plugin = Plugin(
                  'sequencing taxonomy profiler.'),
     short_description='Shallow shotgun sequencing taxonomy profiler.'
 )
+
+plugin.register_views(Bowtie2IndexDirFmt)
+plugin.register_semantic_types(Bowtie2Index)
+plugin.register_semantic_type_to_format(Bowtie2Index, Bowtie2IndexDirFmt)
