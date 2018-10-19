@@ -1,21 +1,23 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2016-2018, QIIME 2 development team.
+# Copyright (c) 2018, QIIME 2 development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
+import os
 import subprocess
 import tempfile
-from shutil import copyfile
-import os
+import shutil
 
-import pandas as pd
+import yaml
 import biom
-import qiime2
-from ._types import Bowtie2Index
+import pandas as pd
+from qiime2.util import duplicate
 from q2_types.feature_data import DNAFASTAFormat
+
+from q2_shogun._formats import Bowtie2IndexDirFmt
 
 
 def _run_command(cmd, verbose=True):
@@ -30,24 +32,42 @@ def _run_command(cmd, verbose=True):
     subprocess.run(cmd, check=True)
 
 
-def minipipe(input: DNAFASTAFormat, refseqs: DNAFASTAFormat,
-             reference_taxonomy: pd.Series, database: Bowtie2Index,
-             taxacut: float=0.8, threads: int=1, percent_id: float=0.98
-             ) -> (biom.Table, biom.Table, biom.Table, biom.Table):
-    with tempfile.NamedTemporaryFile() as tmp:
-        # generate the expected database dir structure
-        copyfile(str(refseqs), os.path.join(tmp, 'seqs.fasta'))
-        copyfile(str(reference_taxonomy), os.path.join(tmp, 'taxa.tsv'))
-        metadata_fp = os.path.join(tmp, 'metadata.yaml')
-        with open(metadata_fp, 'w') as metadata_f:
-            metadata_f.write('general:\n'
-                             '  taxonomy: taxa.tsv\n'
-                             '  fasta: seqs.fasta\n'
-                             'bowtie2: {0}'.format(database))
+def setup_database_dir(tmpdir, database, refseqs, reftaxa):
+    BOWTIE_PATH = 'bowtie2'
+    duplicate(str(refseqs), os.path.join(tmpdir, refseqs.path.name))
+    duplicate(str(reftaxa), os.path.join(tmpdir, reftaxa.path.name))
+    shutil.copytree(str(database), os.path.join(tmpdir, BOWTIE_PATH),
+                    copy_function=duplicate)
+    params = {
+        'general': {
+            'taxonomy': reftaxa.path.name,
+            'fasta': refseqs.path.name
+        },
+        'bowtie2': os.path.join(BOWTIE_PATH, database.get_name())
+    }
+    with open(os.path.join(tmpdir, 'metadata.yaml'), 'w') as fh:
+        yaml.dump(params, fh, default_flow_style=False)
+
+
+def load_table(tab_fp):
+    '''Convert classic OTU table to biom feature table'''
+    return biom.table.Table.from_tsv(tab_fp, None, None, None)
+
+
+def minipipe(query: DNAFASTAFormat, reference_reads: DNAFASTAFormat,
+             reference_taxonomy: pd.Series, database: Bowtie2IndexDirFmt,
+             taxacut: float=0.8,
+             threads: int=1, percent_id: float=0.98) -> (
+                     biom.Table, biom.Table, biom.Table, biom.Table):
+    with tempfile.TemporaryDirectory('q2-shogun') as tmpdir:
+        database_dir = tmpdir.name
+        setup_database_dir(database_dir,
+                           database, reference_reads, reference_taxonomy)
 
         # run pipeline
-        cmd = ['shogun', 'pipeline', '-i', input, '-d', tmp, '-o', tmp,
-               '-a', 'bowtie2', '-x', taxacut, '-t', threads, '-p', percent_id]
+        cmd = ['shogun', 'pipeline', '-i', str(query), '-d', database_dir,
+               '-o', database_dir, '-a', 'bowtie2', '-x', taxacut,
+               '-t', threads, '-p', percent_id]
         _run_command(cmd)
 
         # output selected results as feature tables
@@ -55,10 +75,4 @@ def minipipe(input: DNAFASTAFormat, refseqs: DNAFASTAFormat,
                   'taxatable.strain.kegg.txt',
                   'taxatable.strain.kegg.modules.txt',
                   'taxatable.strain.kegg.pathways.txt']
-        return (import_table(os.path.join(tmp, t)) for t in tables)
-
-
-def import_table(tab_fp):
-    '''Convert classic OTU table to biom feature table'''
-    table = biom.table.Table.from_tsv(tab_fp, None, None, None)
-    return qiime2.Artifact.import_data('FeatureTable[Frequency]', table)
+        return tuple(load_table(os.path.join(database_dir, t)) for t in tables)
