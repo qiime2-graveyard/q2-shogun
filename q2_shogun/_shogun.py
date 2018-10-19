@@ -38,13 +38,12 @@ def setup_database_dir(tmpdir, database, refseqs, reftaxa):
     reftaxa.to_csv(os.path.join(tmpdir, 'taxa.tsv'), sep='\t')
     shutil.copytree(str(database), os.path.join(tmpdir, BOWTIE_PATH),
                     copy_function=duplicate)
-    #        'bowtie2': os.path.join(BOWTIE_PATH, database.get_name())
     params = {
         'general': {
             'taxonomy': 'taxa.tsv',
             'fasta': 'refseqs.fna'
         },
-        'bowtie2': os.path.join(BOWTIE_PATH, 'genomes.small')
+        'bowtie2': os.path.join(BOWTIE_PATH, database.get_basename())
     }
     with open(os.path.join(tmpdir, 'metadata.yaml'), 'w') as fh:
         yaml.dump(params, fh, default_flow_style=False)
@@ -87,7 +86,6 @@ def minipipe(query: DNAFASTAFormat, reference_reads: DNAFASTAFormat,
              threads: int = 1, percent_id: float = 0.98) -> (
                      biom.Table, biom.Table, biom.Table, biom.Table):
     with tempfile.TemporaryDirectory() as tmpdir:
-        # database_dir = tmpdir.name
         setup_database_dir(tmpdir,
                            database, reference_reads, reference_taxonomy)
 
