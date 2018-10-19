@@ -20,8 +20,7 @@ setup(
     license='BSD-3-Clause',
     url="https://qiime2.org",
     entry_points={
-        'qiime2.plugins':
-        ['q2-shogun=q2_shogun.plugin_setup:plugin']
+        'qiime2.plugins': ['q2-shogun=q2_shogun.plugin_setup:plugin']
     },
     package_data={
         'q2_shogun': ['citations.bib'],
