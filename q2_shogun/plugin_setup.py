@@ -11,12 +11,14 @@ from qiime2.plugin import Plugin, Citations, Float, Int, Range
 from q2_types.feature_data import FeatureData, Sequence, Taxonomy
 from q2_types.feature_table import FeatureTable, Frequency
 
+from ._formats import Bowtie2IndexDirFmt
+from ._types import Bowtie2Index
+from ._shogun import minipipe, nobunaga
 import q2_shogun
-from q2_shogun._shogun import minipipe
-from q2_shogun._formats import Bowtie2IndexDirFmt
-from q2_shogun._types import Bowtie2Index
+
 
 citations = Citations.load('citations.bib', package='q2_shogun')
+
 plugin = Plugin(
     name='shogun',
     version=q2_shogun.__version__,
@@ -34,6 +36,37 @@ plugin.register_semantic_types(Bowtie2Index)
 plugin.register_semantic_type_to_format(Bowtie2Index, Bowtie2IndexDirFmt)
 
 plugin.methods.register_function(
+    function=nobunaga,
+    inputs={'query': FeatureData[Sequence],
+            'reference_reads': FeatureData[Sequence],
+            'reference_taxonomy': FeatureData[Taxonomy],
+            'database': Bowtie2Index},
+    parameters={'taxacut': Float % Range(0.0, 1.0, inclusive_end=True),
+                'threads': Int % Range(1, None),
+                'percent_id': Float % Range(0.0, 1.0, inclusive_end=True)},
+    outputs=[('taxa_table', FeatureTable[Frequency])],
+    input_descriptions={'query': 'query sequences.',
+                        'reference_reads': 'reference sequences.',
+                        'reference_taxonomy': 'reference taxonomy labels.',
+                        'database': 'bowtie2 index artifact.'},
+    parameter_descriptions={
+        'taxacut': ('Minimum fraction of assignments must match top '
+                    'hit to be accepted as consensus assignment. Must '
+                    'be in range (0.0, 1.0].'),
+        'threads': 'Number of threads to use.',
+        'percent_id': ('Reject match if percent identity to query is '
+                       'lower. Must be in range [0.0, 1.0].')
+    },
+    output_descriptions={
+        'taxa_table': 'Frequency table of taxonomic composition.'},
+    name='SHOGUN bowtie2 taxonomy profiler',
+    description=('Profile query sequences taxonomically via alignment with '
+                 'bowtie2, followed by LCA taxonomy assignment.'),
+    citations=[citations['langmead2012fast']]
+)
+
+
+plugin.methods.register_function(
     function=minipipe,
     inputs={'query': FeatureData[Sequence],
             'reference_reads': FeatureData[Sequence],
@@ -46,7 +79,7 @@ plugin.methods.register_function(
              ('kegg_table', FeatureTable[Frequency]),
              ('module_table', FeatureTable[Frequency]),
              ('pathway_table', FeatureTable[Frequency])],
-    input_descriptions={'query': 'Sequences to classify taxonomically.',
+    input_descriptions={'query': 'query sequences.',
                         'reference_reads': 'reference sequences.',
                         'reference_taxonomy': 'reference taxonomy labels.',
                         'database': 'bowtie2 index artifact.'},
@@ -65,6 +98,7 @@ plugin.methods.register_function(
         'pathway_table': 'Frequency table of KEGG pathway composition.'},
     name='SHOGUN bowtie2 taxonomy and functional profiler',
     description=('Profile query sequences functionally and taxonomically '
-                 'using via alignment with bowtie2, followed by LCA taxonomy '
-                 'assignment.')
+                 'via alignment with bowtie2, followed by LCA taxonomy '
+                 'assignment and functional annotation.'),
+    citations=[citations['langmead2012fast']]
 )
