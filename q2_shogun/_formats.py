@@ -15,6 +15,7 @@ class Bowtie2IndexFileFormat(model.BinaryFileFormat):
         # correct or not.
         # bowtie2 does have an inspect method — this inspects at the dir level
         # not on the file level.
+        # may also want to validate that all files have the same basename
         pass
 
 
