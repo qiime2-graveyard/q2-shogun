@@ -8,7 +8,6 @@
 
 import unittest
 from warnings import filterwarnings
-import pkg_resources
 
 import qiime2
 import biom
