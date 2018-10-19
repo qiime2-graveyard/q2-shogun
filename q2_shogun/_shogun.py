@@ -64,8 +64,6 @@ def nobunaga(query: DNAFASTAFormat, reference_reads: DNAFASTAFormat,
         setup_database_dir(tmpdir,
                            database, reference_reads, reference_taxonomy)
 
-        print(os.listdir(tmpdir))
-        print(os.listdir(os.path.join(tmpdir, 'bowtie2')))
         # run aligner
         cmd = ['shogun', 'align', '-i', str(query), '-d', tmpdir,
                '-o', tmpdir, '-a', 'bowtie2', '-x', str(taxacut),
@@ -89,13 +87,10 @@ def minipipe(query: DNAFASTAFormat, reference_reads: DNAFASTAFormat,
              threads: int=1, percent_id: float=0.98) -> (
                      biom.Table, biom.Table, biom.Table, biom.Table):
     with tempfile.TemporaryDirectory() as tmpdir:
-        print(tmpdir)
         # database_dir = tmpdir.name
         setup_database_dir(tmpdir,
                            database, reference_reads, reference_taxonomy)
 
-        print(os.listdir(tmpdir))
-        print(os.listdir(os.path.join(tmpdir, 'bowtie2')))
         # run pipeline
         cmd = ['shogun', 'pipeline', '-i', str(query), '-d', tmpdir,
                '-o', tmpdir, '-a', 'bowtie2', '-x', str(taxacut),

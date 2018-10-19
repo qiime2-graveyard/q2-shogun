@@ -11,6 +11,7 @@ from warnings import filterwarnings
 import pkg_resources
 
 import qiime2
+import biom
 from qiime2.plugins import shogun
 from qiime2.plugin.testing import TestPluginBase
 
@@ -20,10 +21,6 @@ filterwarnings("ignore", category=RuntimeWarning)
 
 class TestShogun(TestPluginBase):
     package = 'q2_shogun.tests'
-
-    def get_data_path(self, filename):
-        return pkg_resources.resource_filename(self.package,
-                                               'data/%s' % filename)
 
     def setUp(self):
         super().setUp()
@@ -35,11 +32,18 @@ class TestShogun(TestPluginBase):
         self.query = _load('query.qza')
         self.refseqs = _load('refseqs.qza')
         self.taxonomy = _load('taxonomy.qza')
+        self.taxatable = _load('taxatable.qza').view(biom.Table)
 
-    def test_minipipe(self):
-        taxa, kegg, modules, pathways = shogun.actions.minipipe(
+    # def test_minipipe(self):
+    #    taxa, kegg, modules, pathways = shogun.actions.minipipe(
+    #        query=self.query, reference_reads=self.refseqs,
+    #        reference_taxonomy=self.taxonomy, database=self.database)
+
+    def test_nobunaga(self):
+        taxa = shogun.actions.nobunaga(
             query=self.query, reference_reads=self.refseqs,
             reference_taxonomy=self.taxonomy, database=self.database)
+        taxa.taxa_table.view(biom.Table).descriptive_equality(self.taxatable)
 
 
 if __name__ == '__main__':
