@@ -40,10 +40,6 @@ class TestShogun(TestPluginBase):
         taxa, kegg, modules, pathways = shogun.actions.minipipe(
             query=self.query, reference_reads=self.refseqs,
             reference_taxonomy=self.taxonomy, database=self.database)
-        taxa.save('/Users/nbokulich/Desktop/projects/q2-shogun/q2_shogun/tests/data/exp-taxa.qza')
-        kegg.save('/Users/nbokulich/Desktop/projects/q2-shogun/q2_shogun/tests/data/exp-kegg.qza')
-        modules.save('/Users/nbokulich/Desktop/projects/q2-shogun/q2_shogun/tests/data/exp-modules.qza')
-        pathways.save('/Users/nbokulich/Desktop/projects/q2-shogun/q2_shogun/tests/data/exp-pathways.qza')
 
 
 if __name__ == '__main__':
