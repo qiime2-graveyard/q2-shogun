@@ -23,3 +23,7 @@ class Bowtie2IndexDirFmt(model.DirectoryFormat):
     ref4 = model.File('.+\.4\.bt2', format=Bowtie2IndexFileFormat)
     rev1 = model.File('.+\.rev\.1\.bt2', format=Bowtie2IndexFileFormat)
     rev2 = model.File('.+\.rev\.2\.bt2', format=Bowtie2IndexFileFormat)
+
+    def get_name(self):
+        filename = str(self.idx1.path_maker().relative_to(self.path))
+        return filename.rsplit('.1.bt2')[0]
