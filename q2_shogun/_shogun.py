@@ -34,14 +34,14 @@ def _run_command(cmd, verbose=True):
 
 def setup_database_dir(tmpdir, database, refseqs, reftaxa):
     BOWTIE_PATH = 'bowtie2'
-    duplicate(str(refseqs), os.path.join(tmpdir, refseqs.path.name))
-    duplicate(str(reftaxa), os.path.join(tmpdir, reftaxa.path.name))
+    duplicate(str(refseqs), os.path.join(tmpdir, 'refseqs.fna'))
+    reftaxa.to_csv(os.path.join(tmpdir, 'taxa.tsv'), sep='\t')
     shutil.copytree(str(database), os.path.join(tmpdir, BOWTIE_PATH),
                     copy_function=duplicate)
     params = {
         'general': {
-            'taxonomy': reftaxa.path.name,
-            'fasta': refseqs.path.name
+            'taxonomy': 'taxa.tsv',
+            'fasta': 'refseqs.fna'
         },
         'bowtie2': os.path.join(BOWTIE_PATH, database.get_name())
     }
@@ -59,15 +59,18 @@ def minipipe(query: DNAFASTAFormat, reference_reads: DNAFASTAFormat,
              taxacut: float=0.8,
              threads: int=1, percent_id: float=0.98) -> (
                      biom.Table, biom.Table, biom.Table, biom.Table):
-    with tempfile.TemporaryDirectory('q2-shogun') as tmpdir:
-        database_dir = tmpdir.name
-        setup_database_dir(database_dir,
+    with tempfile.TemporaryDirectory() as tmpdir:
+        print(tmpdir)
+        #database_dir = tmpdir.name
+        setup_database_dir(tmpdir,
                            database, reference_reads, reference_taxonomy)
 
+        print(os.listdir(tmpdir))
+        print(os.listdir(os.path.join(tmpdir, 'bowtie2')))
         # run pipeline
-        cmd = ['shogun', 'pipeline', '-i', str(query), '-d', database_dir,
-               '-o', database_dir, '-a', 'bowtie2', '-x', taxacut,
-               '-t', threads, '-p', percent_id]
+        cmd = ['shogun', 'pipeline', '-i', str(query), '-d', tmpdir,
+               '-o', tmpdir, '-a', 'bowtie2', '-x', str(taxacut),
+               '-t', str(threads), '-p', str(percent_id)]
         _run_command(cmd)
 
         # output selected results as feature tables

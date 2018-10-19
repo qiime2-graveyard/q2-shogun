@@ -11,13 +11,10 @@ from qiime2.plugin import Plugin, Citations, Float, Int, Range
 from q2_types.feature_data import FeatureData, Sequence, Taxonomy
 from q2_types.feature_table import FeatureTable, Frequency
 
-from ._formats import (Bowtie2IndexFileFormat, Bowtie2IndexDirFmt)
+from ._formats import Bowtie2IndexDirFmt
 from ._types import Bowtie2Index
 from ._shogun import minipipe
 import q2_shogun
-from q2_types.feature_data import FeatureData, Taxonomy, Sequence
-from q2_types.feature_table import FeatureTable, Frequency
-from qiime2.plugin import Int, Float, Range
 
 
 citations = Citations.load('citations.bib', package='q2_shogun')
@@ -72,5 +69,5 @@ plugin.methods.register_function(
     description=('Profile query sequences functionally and taxonomically '
                  'using via alignment with bowtie2, followed by LCA taxonomy '
                  'assignment.'),
-    citations=[citations['Langmead2012']]
+    citations=[citations['langmead2012fast']]
 )
