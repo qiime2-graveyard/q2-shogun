@@ -22,12 +22,12 @@ class Bowtie2IndexFileFormat(model.BinaryFileFormat):
 
 
 class Bowtie2IndexDirFmt(model.DirectoryFormat):
-    idx1 = model.File(r'.+(?<!\.rev)\.1\.bt2', format=Bowtie2IndexFileFormat)
-    idx2 = model.File(r'.+(?<!\.rev)\.2\.bt2', format=Bowtie2IndexFileFormat)
-    ref3 = model.File(r'.+\.3\.bt2', format=Bowtie2IndexFileFormat)
-    ref4 = model.File(r'.+\.4\.bt2', format=Bowtie2IndexFileFormat)
-    rev1 = model.File(r'.+\.rev\.1\.bt2', format=Bowtie2IndexFileFormat)
-    rev2 = model.File(r'.+\.rev\.2\.bt2', format=Bowtie2IndexFileFormat)
+    idx1 = model.File('.+(?<!\.rev)\.1\.bt2l?', format=Bowtie2IndexFileFormat)
+    idx2 = model.File('.+(?<!\.rev)\.2\.bt2l?', format=Bowtie2IndexFileFormat)
+    ref3 = model.File('.+\.3\.bt2l?', format=Bowtie2IndexFileFormat)
+    ref4 = model.File('.+\.4\.bt2l?', format=Bowtie2IndexFileFormat)
+    rev1 = model.File('.+\.rev\.1\.bt2l?', format=Bowtie2IndexFileFormat)
+    rev2 = model.File('.+\.rev\.2\.bt2l?', format=Bowtie2IndexFileFormat)
 
     def get_basename(self):
         paths = [str(x.relative_to(self.path)) for x in self.path.iterdir()]
