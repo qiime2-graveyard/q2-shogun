@@ -58,8 +58,8 @@ def load_table(tab_fp):
 
 def nobunaga(query: DNAFASTAFormat, reference_reads: DNAFASTAFormat,
              reference_taxonomy: pd.Series, database: Bowtie2IndexDirFmt,
-             taxacut: float=0.8,
-             threads: int=1, percent_id: float=0.98) -> biom.Table:
+             taxacut: float = 0.8,
+             threads: int = 1, percent_id: float = 0.98) -> biom.Table:
     with tempfile.TemporaryDirectory() as tmpdir:
         setup_database_dir(tmpdir,
                            database, reference_reads, reference_taxonomy)
@@ -83,8 +83,8 @@ def nobunaga(query: DNAFASTAFormat, reference_reads: DNAFASTAFormat,
 
 def minipipe(query: DNAFASTAFormat, reference_reads: DNAFASTAFormat,
              reference_taxonomy: pd.Series, database: Bowtie2IndexDirFmt,
-             taxacut: float=0.8,
-             threads: int=1, percent_id: float=0.98) -> (
+             taxacut: float = 0.8,
+             threads: int = 1, percent_id: float = 0.98) -> (
                      biom.Table, biom.Table, biom.Table, biom.Table):
     with tempfile.TemporaryDirectory() as tmpdir:
         # database_dir = tmpdir.name
