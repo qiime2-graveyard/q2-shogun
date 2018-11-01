@@ -42,7 +42,9 @@ class TestShogun(TestPluginBase):
         taxa = shogun.actions.nobunaga(
             query=self.query, reference_reads=self.refseqs,
             reference_taxonomy=self.taxonomy, database=self.database)
-        taxa.taxa_table.view(biom.Table).descriptive_equality(self.taxatable)
+        taxa_table = taxa.taxa_table.view(biom.Table)
+        report = taxa_table.descriptive_equality(self.taxatable)
+        self.assertIn('Tables appear equal', report, report)
 
 
 if __name__ == '__main__':
