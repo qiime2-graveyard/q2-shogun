@@ -21,6 +21,7 @@ requirements:
     - python {{ python }}
     - SHOGUN
     - bowtie2
+    - cytoolz
 
 test:
   imports:
