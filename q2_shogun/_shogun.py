@@ -7,6 +7,7 @@
 # ----------------------------------------------------------------------------
 
 import os
+import glob
 import subprocess
 import tempfile
 import shutil
@@ -39,12 +40,20 @@ def setup_database_dir(tmpdir, database, refseqs, reftaxa):
     shutil.copytree(str(database), os.path.join(tmpdir, BOWTIE_PATH),
                     copy_function=duplicate)
     #        'bowtie2': os.path.join(BOWTIE_PATH, database.get_name())
+
+    bowtie_filename = glob.glob(str(database) + '/*.rev.1.bt2')
+    if not bowtie_filename:
+        raise Exception("Couldn't find bowtie index files at %s" % (str(database)))
+
+    bowtie_basename = bowtie_filename[0].split('/')[-1].replace('.rev.1.bt2', '')
+
     params = {
         'general': {
             'taxonomy': 'taxa.tsv',
             'fasta': 'refseqs.fna'
         },
-        'bowtie2': os.path.join(BOWTIE_PATH, 'genomes.small')
+        #'bowtie2': os.path.join(BOWTIE_PATH, 'genomes.small')
+        'bowtie2': os.path.join(BOWTIE_PATH, bowtie_basename)
     }
     with open(os.path.join(tmpdir, 'metadata.yaml'), 'w') as fh:
         yaml.dump(params, fh, default_flow_style=False)
@@ -72,7 +81,7 @@ def nobunaga(query: DNAFASTAFormat, reference_reads: DNAFASTAFormat,
 
         # assign taxonomy
         taxatable = os.path.join(tmpdir, 'taxatable.tsv')
-        cmd = ['shogun', 'assign-taxonomy', '-i',
+        cmd = ['shogun', 'assign_taxonomy', '-i',
                os.path.join(tmpdir, 'alignment.bowtie2.sam'), '-d', tmpdir,
                '-o', taxatable, '-a', 'bowtie2']
         _run_command(cmd)
