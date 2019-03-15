@@ -72,7 +72,7 @@ def nobunaga(query: DNAFASTAFormat, reference_reads: DNAFASTAFormat,
 
         # assign taxonomy
         taxatable = os.path.join(tmpdir, 'taxatable.tsv')
-        cmd = ['shogun', 'assign-taxonomy', '-i',
+        cmd = ['shogun', 'assign_taxonomy', '-i',
                os.path.join(tmpdir, 'alignment.bowtie2.sam'), '-d', tmpdir,
                '-o', taxatable, '-a', 'bowtie2']
         _run_command(cmd)
