@@ -8,6 +8,8 @@
 
 from qiime2.plugin import Plugin, Citations, Float, Int, Range
 
+from q2_types.sample_data import SampleData
+from q2_types.per_sample_sequences import Sequences
 from q2_types.feature_data import FeatureData, Sequence, Taxonomy
 from q2_types.feature_table import FeatureTable, Frequency
 
@@ -37,7 +39,7 @@ plugin.register_semantic_type_to_format(Bowtie2Index, Bowtie2IndexDirFmt)
 
 plugin.methods.register_function(
     function=nobunaga,
-    inputs={'query': FeatureData[Sequence],
+    inputs={'query': SampleData[Sequences],
             'reference_reads': FeatureData[Sequence],
             'reference_taxonomy': FeatureData[Taxonomy],
             'database': Bowtie2Index},
@@ -68,7 +70,7 @@ plugin.methods.register_function(
 
 plugin.methods.register_function(
     function=minipipe,
-    inputs={'query': FeatureData[Sequence],
+    inputs={'query': SampleData[Sequences],
             'reference_reads': FeatureData[Sequence],
             'reference_taxonomy': FeatureData[Taxonomy],
             'database': Bowtie2Index},

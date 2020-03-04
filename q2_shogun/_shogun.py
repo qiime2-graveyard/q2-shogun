@@ -15,6 +15,7 @@ import yaml
 import biom
 import pandas as pd
 from qiime2.util import duplicate
+from q2_types.per_sample_sequences import QIIME1DemuxFormat
 from q2_types.feature_data import DNAFASTAFormat
 
 from q2_shogun._formats import Bowtie2IndexDirFmt
@@ -55,7 +56,7 @@ def load_table(tab_fp):
         return biom.table.Table.from_tsv(tab, None, None, None)
 
 
-def nobunaga(query: DNAFASTAFormat, reference_reads: DNAFASTAFormat,
+def nobunaga(query: QIIME1DemuxFormat, reference_reads: DNAFASTAFormat,
              reference_taxonomy: pd.Series, database: Bowtie2IndexDirFmt,
              taxacut: float = 0.8,
              threads: int = 1, percent_id: float = 0.98) -> biom.Table:
@@ -80,7 +81,7 @@ def nobunaga(query: DNAFASTAFormat, reference_reads: DNAFASTAFormat,
         return load_table(taxatable)
 
 
-def minipipe(query: DNAFASTAFormat, reference_reads: DNAFASTAFormat,
+def minipipe(query: QIIME1DemuxFormat, reference_reads: DNAFASTAFormat,
              reference_taxonomy: pd.Series, database: Bowtie2IndexDirFmt,
              taxacut: float = 0.8,
              threads: int = 1, percent_id: float = 0.98) -> (
