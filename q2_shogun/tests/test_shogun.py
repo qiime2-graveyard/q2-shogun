@@ -54,6 +54,44 @@ class TestShogun(TestPluginBase):
         report = observed_taxa_table.descriptive_equality(expected_taxa_table)
         self.assertIn('Tables appear equal', report, report)
 
+    def test_minipipe(self):
+        # this is insufficiently tested at the moment. i don't have test data
+        # for this function, but needed to modify its input type (see issue
+        # #13). i'm therefore just confirming that it runs, that the taxa
+        # table is as expected, and that the kegg, module, and pathway tables
+        # have the expected sample ids
+        result = shogun.actions.minipipe(
+            query=self.query, reference_reads=self.refseqs,
+            reference_taxonomy=self.taxonomy, database=self.database)
+        observed_taxa_table = result.taxa_table.view(biom.Table).\
+            sort(axis='observation').sort(axis='sample')
+        observed_kegg_table = result.kegg_table.view(biom.Table).\
+            sort(axis='observation').sort(axis='sample')
+        observed_module_table = result.module_table.view(biom.Table).\
+            sort(axis='observation').sort(axis='sample')
+        observed_pathway_table = result.pathway_table.view(biom.Table).\
+            sort(axis='observation').sort(axis='sample')
+
+        expected_taxa_table = self.taxatable.view(biom.Table).\
+            sort(axis='observation').sort(axis='sample')
+
+        expected_feature_ids = set(expected_taxa_table.ids(axis='observation'))
+        self.assertEqual(observed_taxa_table.ids(axis='observation'),
+                         expected_feature_ids)
+
+        expected_sample_ids = set(expected_taxa_table.ids(axis='sample'))
+        self.assertEqual(observed_taxa_table.ids(axis='sample'),
+                         expected_sample_ids)
+        self.assertEqual(observed_kegg_table.ids(axis='sample'),
+                         expected_sample_ids)
+        self.assertEqual(observed_module_table.ids(axis='sample'),
+                         expected_sample_ids)
+        self.assertEqual(observed_pathway_table.ids(axis='sample'),
+                         expected_sample_ids)
+
+        report = observed_taxa_table.descriptive_equality(expected_taxa_table)
+        self.assertIn('Tables appear equal', report, report)
+
 
 if __name__ == '__main__':
     unittest.main()
