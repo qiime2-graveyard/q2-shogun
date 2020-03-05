@@ -9,7 +9,8 @@
 from qiime2.plugin import Plugin, Citations, Float, Int, Range
 
 from q2_types.sample_data import SampleData
-from q2_types.per_sample_sequences import Sequences
+from q2_types.per_sample_sequences import (
+    Sequences, SequencesWithQuality, JoinedSequencesWithQuality)
 from q2_types.feature_data import FeatureData, Sequence, Taxonomy
 from q2_types.feature_table import FeatureTable, Frequency
 
@@ -39,7 +40,9 @@ plugin.register_semantic_type_to_format(Bowtie2Index, Bowtie2IndexDirFmt)
 
 plugin.methods.register_function(
     function=nobunaga,
-    inputs={'query': SampleData[Sequences],
+    inputs={'query': (SampleData[Sequences] |
+                      SampleData[SequencesWithQuality] |
+                      SampleData[JoinedSequencesWithQuality]),
             'reference_reads': FeatureData[Sequence],
             'reference_taxonomy': FeatureData[Taxonomy],
             'database': Bowtie2Index},
@@ -47,7 +50,7 @@ plugin.methods.register_function(
                 'threads': Int % Range(1, None),
                 'percent_id': Float % Range(0.0, 1.0, inclusive_end=True)},
     outputs=[('taxa_table', FeatureTable[Frequency])],
-    input_descriptions={'query': 'query sequences.',
+    input_descriptions={'query': 'Post-quality-control query sequences.',
                         'reference_reads': 'reference sequences.',
                         'reference_taxonomy': 'reference taxonomy labels.',
                         'database': 'bowtie2 index artifact.'},
@@ -70,7 +73,9 @@ plugin.methods.register_function(
 
 plugin.methods.register_function(
     function=minipipe,
-    inputs={'query': SampleData[Sequences],
+    inputs={'query': (SampleData[Sequences] |
+                      SampleData[SequencesWithQuality] |
+                      SampleData[JoinedSequencesWithQuality]),
             'reference_reads': FeatureData[Sequence],
             'reference_taxonomy': FeatureData[Taxonomy],
             'database': Bowtie2Index},
@@ -81,7 +86,7 @@ plugin.methods.register_function(
              ('kegg_table', FeatureTable[Frequency]),
              ('module_table', FeatureTable[Frequency]),
              ('pathway_table', FeatureTable[Frequency])],
-    input_descriptions={'query': 'query sequences.',
+    input_descriptions={'query': 'Post-quality-control query sequences.',
                         'reference_reads': 'reference sequences.',
                         'reference_taxonomy': 'reference taxonomy labels.',
                         'database': 'bowtie2 index artifact.'},
