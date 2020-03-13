@@ -10,7 +10,8 @@ from qiime2.plugin import Plugin, Citations, Float, Int, Range
 
 from q2_types.sample_data import SampleData
 from q2_types.per_sample_sequences import (
-    Sequences, SequencesWithQuality, JoinedSequencesWithQuality)
+    Sequences, SequencesWithQuality, JoinedSequencesWithQuality,
+    PairedEndSequencesWithQuality)
 from q2_types.feature_data import FeatureData, Sequence, Taxonomy
 from q2_types.feature_table import FeatureTable, Frequency
 
@@ -42,6 +43,7 @@ plugin.methods.register_function(
     function=nobunaga,
     inputs={'query': (SampleData[Sequences] |
                       SampleData[SequencesWithQuality] |
+                      SampleData[PairedEndSequencesWithQuality] |
                       SampleData[JoinedSequencesWithQuality]),
             'reference_reads': FeatureData[Sequence],
             'reference_taxonomy': FeatureData[Taxonomy],
