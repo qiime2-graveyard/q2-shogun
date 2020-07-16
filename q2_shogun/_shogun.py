@@ -17,7 +17,7 @@ import pandas as pd
 from qiime2.util import duplicate
 from q2_types.feature_data import DNAFASTAFormat
 
-from q2_shogun._formats import Bowtie2IndexDirFmt
+from q2_types.bowtie2 import Bowtie2IndexDirFmt
 
 
 def _run_command(cmd, verbose=True):

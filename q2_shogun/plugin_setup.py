@@ -10,9 +10,8 @@ from qiime2.plugin import Plugin, Citations, Float, Int, Range
 
 from q2_types.feature_data import FeatureData, Sequence, Taxonomy
 from q2_types.feature_table import FeatureTable, Frequency
+from q2_types.bowtie2 import Bowtie2Index
 
-from ._formats import Bowtie2IndexDirFmt
-from ._types import Bowtie2Index
 from ._shogun import minipipe, nobunaga
 import q2_shogun
 
@@ -29,11 +28,6 @@ plugin = Plugin(
     short_description='Shallow shotgun sequencing taxonomy profiler.',
     citations=[citations['Hillmann320986']]
 )
-
-plugin.register_views(Bowtie2IndexDirFmt,
-                      citations=[citations['langmead2012fast']])
-plugin.register_semantic_types(Bowtie2Index)
-plugin.register_semantic_type_to_format(Bowtie2Index, Bowtie2IndexDirFmt)
 
 plugin.methods.register_function(
     function=nobunaga,
