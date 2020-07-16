@@ -19,6 +19,8 @@ requirements:
 
   run:
     - python {{ python }}
+    - qiime2 {{ release }}.*
+    - q2-types {{ release }}.*
     - SHOGUN
     - bowtie2
     - cytoolz
